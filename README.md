@@ -387,3 +387,240 @@ bob@dylan:~$
 * GitHub repository: `alx-files_manager`
 * File: `utils/, routes/index.js, controllers/FilesController.js`
 
+
+## 6. Get and list file
+
+In the file `routes/index.js`, add 2 new endpoints:
+
+* `GET /files/:id => FilesController.getShow`
+* `GET /files => FilesController.getIndex`
+In the file `controllers/FilesController.js`, add the 2 new endpoints:
+
+`GET /files/:id` should retrieve the file document based on the ID:
+
+* Retrieve the user based on the token:
+ * If not found, return an error `Unauthorized` with a status code 401
+* If no file document is linked to the user and the ID passed as parameter, return an error `Not found` with a status code 404
+* Otherwise, return the file document
+`GET /files` should retrieve all users file documents for a specific `parentId` and with pagination:
+
+* Retrieve the user based on the token:
+ * If not found, return an error `Unauthorized` with a status code 401
+* Based on the query parameters `parentId` and `page`, return the list of file document
+ * `parentId:`
+  * No validation of `parentId` needed - if the `parentId` is not linked to any user folder, returns an empty list
+  * By default, `parentId` is equal to 0 = the root
+ * Pagination:
+  * Each page should be 20 items max
+  * `page` query parameter starts at 0 for the first page. If equals to 1, it means it’s the second page (form the 20th to the 40th), etc…
+  * Pagination can be done directly by the `aggregate` of MongoDB
+```
+bob@dylan:~$ curl 0.0.0.0:5000/connect -H "Authorization: Basic Ym9iQGR5bGFuLmNvbTp0b3RvMTIzNCE=" ; echo ""
+{"token":"f21fb953-16f9-46ed-8d9c-84c6450ec80f"}
+bob@dylan:~$ 
+bob@dylan:~$ curl -XGET 0.0.0.0:5000/files -H "X-Token: f21fb953-16f9-46ed-8d9c-84c6450ec80f" ; echo ""
+[{"id":"5f1e879ec7ba06511e683b22","userId":"5f1e7cda04a394508232559d","name":"myText.txt","type":"file","isPublic":false,"parentId":0},{"id":"5f1e881cc7ba06511e683b23","userId":"5f1e7cda04a394508232559d","name":"images","type":"folder","isPublic":false,"parentId":0},{"id":"5f1e8896c7ba06511e683b25","userId":"5f1e7cda04a394508232559d","name":"image.png","type":"image","isPublic":true,"parentId":"5f1e881cc7ba06511e683b23"}]
+bob@dylan:~$
+bob@dylan:~$ curl -XGET 0.0.0.0:5000/files?parentId=5f1e881cc7ba06511e683b23 -H "X-Token: f21fb953-16f9-46ed-8d9c-84c6450ec80f" ; echo ""
+[{"id":"5f1e8896c7ba06511e683b25","userId":"5f1e7cda04a394508232559d","name":"image.png","type":"image","isPublic":true,"parentId":"5f1e881cc7ba06511e683b23"}]
+bob@dylan:~$
+bob@dylan:~$ curl -XGET 0.0.0.0:5000/files/5f1e8896c7ba06511e683b25 -H "X-Token: f21fb953-16f9-46ed-8d9c-84c6450ec80f" ; echo ""
+{"id":"5f1e8896c7ba06511e683b25","userId":"5f1e7cda04a394508232559d","name":"image.png","type":"image","isPublic":true,"parentId":"5f1e881cc7ba06511e683b23"}
+bob@dylan:~$
+```
+
+### Repo:
+
+* GitHub repository: `alx-files_manager`
+* File: `utils/, routes/index.js, controllers/FilesController.js`
+
+
+## 7. File publish/unpublish
+
+In the file `routes/index.js`, add 2 new endpoints:
+
+* `PUT /files/:id/publish => FilesController.putPublish`
+* `PUT /files/:id/publish => FilesController.putUnpublish`
+In the file `controllers/FilesController.js`, add the 2 new endpoints:
+
+`PUT /files/:id/publish` should set `isPublic` to `true` on the file document based on the ID:
+
+* Retrieve the user based on the token:
+ * If not found, return an error `Unauthorized` with a status code 401
+* If no file document is linked to the user and the ID passed as parameter, return an error `Not found` with a status code 404
+* Otherwise:
+ * Update the value of `isPublic` to `true`
+ * And return the file document with a status code 200
+`PUT /files/:id/unpublish` should set `isPublic` to `false` on the file document based on the ID:
+
+* Retrieve the user based on the token:
+ * If not found, return an error `Unauthorized` with a status code 401
+* If no file document is linked to the user and the ID passed as parameter, return an error `Not found` with a status code 404
+* Otherwise:
+ * Update the value of `isPublic` to `false`
+ * And return the file document with a status code 200
+```
+bob@dylan:~$ curl 0.0.0.0:5000/connect -H "Authorization: Basic Ym9iQGR5bGFuLmNvbTp0b3RvMTIzNCE=" ; echo ""
+{"token":"f21fb953-16f9-46ed-8d9c-84c6450ec80f"}
+bob@dylan:~$ 
+bob@dylan:~$ curl -XGET 0.0.0.0:5000/files/5f1e8896c7ba06511e683b25 -H "X-Token: f21fb953-16f9-46ed-8d9c-84c6450ec80f" ; echo ""
+{"id":"5f1e8896c7ba06511e683b25","userId":"5f1e7cda04a394508232559d","name":"image.png","type":"image","isPublic":false,"parentId":"5f1e881cc7ba06511e683b23"}
+bob@dylan:~$
+bob@dylan:~$ curl -XPUT 0.0.0.0:5000/files/5f1e8896c7ba06511e683b25/publish -H "X-Token: f21fb953-16f9-46ed-8d9c-84c6450ec80f" ; echo ""
+{"id":"5f1e8896c7ba06511e683b25","userId":"5f1e7cda04a394508232559d","name":"image.png","type":"image","isPublic":true,"parentId":"5f1e881cc7ba06511e683b23"}
+bob@dylan:~$ 
+bob@dylan:~$ curl -XPUT 0.0.0.0:5000/files/5f1e8896c7ba06511e683b25/unpublish -H "X-Token: f21fb953-16f9-46ed-8d9c-84c6450ec80f" ; echo ""
+{"id":"5f1e8896c7ba06511e683b25","userId":"5f1e7cda04a394508232559d","name":"image.png","type":"image","isPublic":false,"parentId":"5f1e881cc7ba06511e683b23"}
+bob@dylan:~$ 
+```
+
+### Repo:
+
+* GitHub repository: `alx-files_manager`
+* File: `utils/, routes/index.js, controllers/FilesController.js`
+
+
+## 8. File data
+
+In the file `routes/index.js`, add one new endpoint:
+
+* `GET /files/:id/data => FilesController.getFile`
+In the file `controllers/FilesController.js`, add the new endpoint:
+
+`GET /files/:id/data` should return the content of the file document based on the ID:
+
+* If no file document is linked to the ID passed as parameter, return an error `Not found` with a status code 404
+* If the file document (folder or file) is not public (`isPublic: false`) and no user authenticate or not the owner of the file, 
+return an `error Not` found with a status code 404
+* If the type of the file document is `folder`, return an error `A folder doesn't have content` with a status code 400
+* If the file is not locally present, return an error `Not found` with a status code 404
+* Otherwise:
+ * By using the module `mime-types`, get the [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/MIME_types) based on the `name` of the file
+ * Return the content of the file with the correct MIME-type
+```
+bob@dylan:~$ curl 0.0.0.0:5000/connect -H "Authorization: Basic Ym9iQGR5bGFuLmNvbTp0b3RvMTIzNCE=" ; echo ""
+{"token":"f21fb953-16f9-46ed-8d9c-84c6450ec80f"}
+bob@dylan:~$ 
+bob@dylan:~$ curl -XPUT 0.0.0.0:5000/files/5f1e879ec7ba06511e683b22/unpublish -H "X-Token: f21fb953-16f9-46ed-8d9c-84c6450ec80f" ; echo ""
+{"id":"5f1e879ec7ba06511e683b22","userId":"5f1e7cda04a394508232559d","name":"myText.txt","type":"file","isPublic":false,"parentId":0}
+bob@dylan:~$ 
+bob@dylan:~$ curl -XGET 0.0.0.0:5000/files/5f1e879ec7ba06511e683b22/data -H "X-Token: f21fb953-16f9-46ed-8d9c-84c6450ec80f" ; echo ""
+Hello Webstack!
+
+bob@dylan:~$ curl -XGET 0.0.0.0:5000/files/5f1e879ec7ba06511e683b22/data ; echo ""
+{"error":"Not found"}
+bob@dylan:~$ 
+bob@dylan:~$ curl -XPUT 0.0.0.0:5000/files/5f1e879ec7ba06511e683b22/publish -H "X-Token: f21fb953-16f9-46ed-8d9c-84c6450ec80f" ; echo ""
+{"id":"5f1e879ec7ba06511e683b22","userId":"5f1e7cda04a394508232559d","name":"myText.txt","type":"file","isPublic":true,"parentId":0}
+bob@dylan:~$ 
+bob@dylan:~$ curl -XGET 0.0.0.0:5000/files/5f1e879ec7ba06511e683b22/data ; echo ""
+Hello Webstack!
+
+bob@dylan:~$
+```
+
+### Repo:
+
+* GitHub repository: `alx-files_manager`
+* File: `utils/, routes/index.js, controllers/FilesController.js`
+
+
+## 9. Image Thumbnails
+
+Update the endpoint `POST /files` endpoint to start a background processing for generating thumbnails for a file of type `image:`
+
+* Create a `Bull` queue `fileQueue`
+* When a new image is stored (in local and in DB), add a job to this queue with the `userId` and `fileId`
+Create a file `worker.js:`
+
+* By using the module `Bull`, create a queue `fileQueue`
+* Process this queue:
+ * If `fileId` is not present in the job, raise an error `Missing fileId`
+ * If `userId` is not present in the job, raise an error `Missing userId`
+ * If no document is found in DB based on the `fileId` and `userId`, raise an error `File not found`
+ * By using the module `image-thumbnail`, generate 3 thumbnails with `width` = 500, 250 and 100 - store each result on the same location 
+of the original file by appending `_<width size>`
+Update the endpoint `GET /files/:id/data` to accept a query parameter `size:`
+
+* `size` can be `500`, `250` or `100`
+* Based on `size`, return the correct local file
+* If the local file doesn’t exist, return an error `Not found` with a status code 404
+
+#### Terminal 3: (start the worker)
+```
+bob@dylan:~$ npm run start-worker
+...
+```
+#### Terminal 2:
+```
+bob@dylan:~$ curl 0.0.0.0:5000/connect -H "Authorization: Basic Ym9iQGR5bGFuLmNvbTp0b3RvMTIzNCE=" ; echo ""
+{"token":"f21fb953-16f9-46ed-8d9c-84c6450ec80f"}
+bob@dylan:~$ 
+bob@dylan:~$ python image_upload.py image.png f21fb953-16f9-46ed-8d9c-84c6450ec80f 5f1e881cc7ba06511e683b23
+{'id': '5f1e8896c7ba06511e683b25', 'userId': '5f1e7cda04a394508232559d', 'name': 'image.png', 'type': 'image', 'isPublic': True, 'parentId': '5f1e881cc7ba06511e683b23'}
+bob@dylan:~$ ls /tmp/files_manager/
+2a1f4fc3-687b-491a-a3d2-5808a02942c9   51997b88-5c42-42c2-901e-e7f4e71bdc47   6dc53397-8491-4b7c-8273-f748b1a031cb   6dc53397-8491-4b7c-8273-f748b1a031cb_100   6dc53397-8491-4b7c-8273-f748b1a031cb_250    6dc53397-8491-4b7c-8273-f748b1a031cb_500
+bob@dylan:~$ 
+bob@dylan:~$ curl -XGET 0.0.0.0:5000/files/5f1e8896c7ba06511e683b25/data -so new_image.png ; file new_image.png
+new_image.png: PNG image data, 471 x 512, 8-bit/color RGBA, non-interlaced
+bob@dylan:~$ 
+bob@dylan:~$ curl -XGET 0.0.0.0:5000/files/5f1e8896c7ba06511e683b25/data?size=100 -so new_image.png ; file new_image.png
+new_image.png: PNG image data, 100 x 109, 8-bit/color RGBA, non-interlaced
+bob@dylan:~$ 
+bob@dylan:~$ curl -XGET 0.0.0.0:5000/files/5f1e8896c7ba06511e683b25/data?size=250 -so new_image.png ; file new_image.png
+new_image.png: PNG image data, 250 x 272, 8-bit/color RGBA, non-interlaced
+bob@dylan:~$
+```
+
+### Repo:
+
+* GitHub repository: `alx-files_manager`
+* File: `utils/, controllers/FilesController.js, worker.js`
+
+## 10. Tests!
+
+Of course, a strong and stable project can not be good without tests.
+
+Create tests for `redisClient` and `dbClient.`
+
+Create tests for each endpoints:
+
+* `GET /status`
+* `GET /stats`
+* `POST /users`
+* `GET /connect`
+* `GET /disconnect`
+* `GET /users/me`
+* `POST /files`
+* `GET /files/:id`
+* `GET /files` (don’t forget the pagination)
+* `PUT /files/:id/publish`
+* `PUT /files/:id/unpublish`
+* `GET /files/:id/data`
+
+### Repo:
+
+* GitHub repository: `alx-files_manager`
+* File: `tests/`
+
+## 11. New user - welcome email
+
+Update the endpoint `POST /users` endpoint to start a background processing for sending a “Welcome email” to the user:
+
+* Create a `Bull` queue `userQueue`
+* When a new user is stored (in DB), add a job to this queue with the `userId`
+Update the file `worker.js:`
+
+* By using the module `Bull`, create a queue `userQueue`
+* Process this queue:
+ * If `userId` is not present in the job, raise an error `Missing userId`
+ * If no document is found in DB based on the userId, raise an error `User not found`
+ * Print in the console `Welcome <email>!`
+In real life, you can use a third party service like [Mailgun](https://www.mailgun.com/) to send real email. These API are slow, 
+(sending via SMTP is worst!) and sending emails via a background job is important to optimize API endpoint.
+
+
+### Repo:
+
+* GitHub repository: `alx-files_manager`
+* File: `utils/, worker.js, controllers/UsersController.js`
